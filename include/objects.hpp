@@ -37,7 +37,6 @@ public:
     Vec3f u = Vec3f(1.0f, 0.0f, 0.0f);
     Vec3f v = Vec3f(0.0f, 1.0f, 0.0f);
     int samplePerPixel = 10;
-    int maxRecursionDepth = 1;
     Camera(const Vec3f& position);
     Camera() = default;
 
