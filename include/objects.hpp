@@ -115,7 +115,7 @@ public:
     Scene() = default;
 
     bool isShadowed(const Vec3f& hitPoint,const std::shared_ptr<LightSource>& lightSource) const;
-    RGB getPixelColor(const Ray& ray,int maxRecursionDepth) const;
+    RGB getPixelColor(const Ray& ray) const;
 
 };
 

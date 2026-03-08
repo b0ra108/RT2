@@ -140,7 +140,8 @@ bool Scene::isShadowed(const Vec3f& hitPoint,const std::shared_ptr<LightSource>&
     }
     return false;
 }
-RGB Scene::getPixelColor(const Ray& ray,int maxRecursionDepth) const{
+
+RGB Scene::getPixelColor(const Ray& ray) const{
     RGB pixelColor(AmbientLight); // start with ambient light
     Hittable* closestHittable = nullptr;
     float closestHit = std::numeric_limits<float>::max();
@@ -209,7 +210,7 @@ void Camera::render(const Scene& scene) {
             RGB pixelColor(0,0,0);
             for(int k = 0;k < samplePerPixel;k++){
                 Ray ray = generateRay(i,j);
-                pixelColor += scene.getPixelColor(ray,maxRecursionDepth) / samplePerPixel;
+                pixelColor += scene.getPixelColor(ray) / samplePerPixel;
             }
             image[i][j] = pixelColor;// DO IT LATER !!division can be done at the end of the loop as image[i][j] = pixelColor / samplePerPixel
         }

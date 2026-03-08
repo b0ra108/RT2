@@ -11,7 +11,7 @@ int main(){
 
     hittables.push_back(std::make_shared<Sphere>(m1, Vec3f(0.0f, 0.0f, -5.0f), 2.0f));
     hittables.push_back(std::make_shared<Sphere>(m2, Vec3f(0.0f, -102.0f, -5.0f), 100.0f));
-    lightSources.push_back(std::make_shared<LightSource>(Vec3f(5.0f, 10.0f, 0.0f),Vec3f(300.0f, 300.0f, 300.0f)));
+    lightSources.push_back(std::make_shared<LightSource>(Vec3f(5.0f, 10.0f, 0.0f),Vec3f(200.0f, 200.0f, 200.0f)));
 
     Scene scene;
     scene.hittables = hittables;
