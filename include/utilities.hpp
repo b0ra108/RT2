@@ -42,3 +42,8 @@ inline Vec3f randomVec3fHemisphere(const Vec3f& normal){
     return random_unit_vec * (-1);
 }
 
+inline bool isNearZero(const Vec3f& v) {
+    float s = 1e-8;
+    return (std::fabs(v.getX()) < s) && (std::fabs(v.getY()) < s) && (std::fabs(v.getZ()) < s);
+}
+

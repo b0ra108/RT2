@@ -71,9 +71,12 @@ public:
 class Material {
 private:
     RGB DiffuseReflectance;
+    bool Mirrored;
 public:
     Material(const RGB& DiffuseReflectance);
+    Material(const RGB& DiffuseReflectance,bool Mirrored);
     RGB getColor() const;
+    Vec3f scatter(const Ray& ray,const Vec3f& normal) const;
 };
 
 class LightSource{

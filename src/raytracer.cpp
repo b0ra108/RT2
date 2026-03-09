@@ -168,7 +168,8 @@ RGB Scene::getPixelColor(const Ray& ray,int maxRecursionDepth) const{
                             (lightSource->getIntensity() / r_square));
                 }
             }
-            return pixelColor * getPixelColor(Ray(hitPoint,surfaceNormal + randomUnitVec3f()),maxRecursionDepth - 1);
+            Vec3f scatter_direction = closestHittable->getMaterial()->scatter(ray,surfaceNormal);
+            return pixelColor * getPixelColor(Ray(hitPoint,scatter_direction),maxRecursionDepth - 1);
         }
     }
 
@@ -237,8 +238,32 @@ void Camera::setPosition(const Vec3f& position) {
     updateCamera();
 }
 
-Material::Material(const RGB& DiffuseReflectance) : DiffuseReflectance(DiffuseReflectance) {}
+Material::Material(const RGB& DiffuseReflectance,bool Mirrored) : 
+                    DiffuseReflectance(DiffuseReflectance),
+                    Mirrored(Mirrored){}
+
+Material::Material(const RGB& DiffuseReflectance) : 
+                    DiffuseReflectance(DiffuseReflectance),
+                    Mirrored(false){}
+
 RGB Material::getColor() const { return DiffuseReflectance; }
+
+Vec3f Material::scatter(const Ray& ray,const Vec3f& normal) const{
+    if(Mirrored){
+        Vec3f ray_direction = ray.getDirection();
+        return ray_direction - normal *(2 * ray_direction.dot(normal));
+    }
+
+    Vec3f ray_direction = normal + randomUnitVec3f();
+
+    if(isNearZero(ray_direction))
+        return normal;
+    
+    return ray_direction;
+
+}
+
+
 
 // Hittable class implementations
 Hittable::Hittable(const std::shared_ptr<Material>& material) : material(material) {}
