@@ -71,12 +71,15 @@ public:
 class Material {
 private:
     RGB DiffuseReflectance;
-    bool Mirror; 
+    bool Mirror;
+    float Fuzziness;
 public:
     Material(const RGB& DiffuseReflectance);
     Material(const RGB& DiffuseReflectance,bool Mirror);
+    Material(const RGB& DiffuseReflectance,bool Mirror,float Fuzziness);
     RGB getColor() const;
     bool isMirrored() const;
+    float getFuzziness() const;
 };
 
 class LightSource{
@@ -106,7 +109,7 @@ public:
     void setOrigin(const Vec3f& origin);
     void setDirection(const Vec3f& direction);
     Vec3f pointAt(float t) const;
-    Vec3f reflect(const Vec3f& normal) const;
+    Vec3f reflect(const Vec3f& normal,float fuzziness) const;
 };
 
 

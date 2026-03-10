@@ -5,8 +5,8 @@ int main(){
     Camera cam(Vec3f(0.0f, 0.0f, 0.0f));
     auto m1 = std::make_shared<Material>(RGB(215, 32, 93));
     auto m2 = std::make_shared<Material>(RGB(22,218,113));
-    auto m3 = std::make_shared<Material>(RGB(0.8f, 0.6f, 0.2f),true);
-    auto m4 = std::make_shared<Material>(RGB(0.4f,0.9f,0.1f),true);
+    auto m3 = std::make_shared<Material>(RGB(0.8f, 0.6f, 0.2f),true,0.1f);
+    auto m4 = std::make_shared<Material>(RGB(0.4f,0.9f,0.1f),true,0.1f);
 
     std::vector<std::shared_ptr<Hittable>> hittables;
     std::vector<std::shared_ptr<LightSource>> lightSources;
