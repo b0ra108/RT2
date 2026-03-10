@@ -169,10 +169,13 @@ RGB Scene::getPixelColor(const Ray& ray,int maxRecursionDepth) const{
                         (lightSource->getIntensity() / r_square));
             }
         }
-        if(hitMaterial->isMirrored() && maxRecursionDepth){
+        if(hitMaterial->isMirrored() && maxRecursionDepth > 0){
             return pixelColor * getPixelColor(Ray(hitPoint,ray.reflect(surfaceNormal,hitMaterial->getFuzziness())),maxRecursionDepth - 1);
         }
-
+        else if(hitMaterial->isDielectric() && maxRecursionDepth > 0 ){
+            return pixelColor * getPixelColor(Ray(hitPoint,ray.refract(surfaceNormal,hitMaterial->getRI())),
+                                        maxRecursionDepth - 2);
+        }
 
         return pixelColor;
     }
@@ -184,6 +187,14 @@ Vec3f Ray::reflect(const Vec3f& normal,float fuzziness) const{
     Vec3f reflected_direction = direction -  normal * 2 * direction.dot(normal);
     return reflected_direction.normalized() + randomUnitVec3f() * fuzziness;
 }
+
+Vec3f Ray::refract(const Vec3f& normal,float ri) const{
+    auto cos_theta = std::fmin((direction.normalized() * (-1)).dot(normal) ,1.0f);
+    Vec3f horizontal_component = (direction + normal * cos_theta) * ri;
+    Vec3f vertical_component = normal * (-std::sqrt(std::fabs(1.0 - horizontal_component.dot(horizontal_component))));
+    return horizontal_component + vertical_component;
+}
+
 
 // Camera class implementations
 Camera::Camera(const Vec3f& position) : position(position) {}
@@ -251,27 +262,32 @@ void Camera::setPosition(const Vec3f& position) {
 // Material class implementations
 Material::Material(const RGB& DiffuseReflectance) : DiffuseReflectance(DiffuseReflectance), 
                                                     Mirror(false),
-                                                    Fuzziness(0.0f) {}
-Material::Material(const RGB& DiffuseReflectance,bool Mirror) : DiffuseReflectance(DiffuseReflectance), 
-                                                                Mirror(Mirror),
-                                                                Fuzziness(0.0f),
-                                                                 {}
+                                                    Fuzziness(0.0f),
+                                                    Dielectric(false),
+                                                    RefractiveIndex(-1.0f) {}
 
 Material::Material(const RGB& DiffuseReflectance,bool Mirror,float Fuzziness) : DiffuseReflectance(DiffuseReflectance), 
                                                                                 Mirror(Mirror),
-                                                                                Fuzziness(Fuzziness > 1.0f ? 1.0f : 
-                                                                                    (Fuzziness < 0.0f ? 0.0f : Fuzziness)) {}
+                                                                                Fuzziness(Mirror == true ? 
+                                                                                    (Fuzziness > 1.0f ? 1.0f : (Fuzziness < 0.0f ? 0.0f : Fuzziness)) :
+                                                                                    0.0f),
+                                                                                Dielectric(false),
+                                                                                RefractiveIndex(-1.0f){}
                                                                                 
-Material::Material(const RGB& DiffuseReflectance,bool Mirror,
-                    float Fuzziness,float RefractiveIndex): DiffuseReflectance(DiffuseReflectance), 
-                                                            Mirror(Mirror),
-                                                            Fuzziness(Fuzziness > 1.0f ? 1.0f : 
-                                                                (Fuzziness < 0.0f ? 0.0f : Fuzziness)),
-                                                            RefractiveIndex(RefractiveIndex) {}
+Material::Material(const RGB& DiffuseReflectance,float RefractiveIndex): DiffuseReflectance(DiffuseReflectance), 
+                                                            Mirror(false),
+                                                            Fuzziness(0.0f),
+                                                            /*Dielectric(Dielectric),
+                                                            RefractiveIndex(Dielectric == true ? 
+                                                                        (RefractiveIndex <= 0.0f ? 0.0f : RefractiveIndex) : -1.0f)*/
+                                                            Dielectric(true),
+                                                            RefractiveIndex(RefractiveIndex){}
 
 RGB Material::getColor() const { return DiffuseReflectance; }
 bool Material::isMirrored() const { return Mirror; }
 float Material::getFuzziness() const { return Fuzziness; }
+bool Material::isDielectric() const { return Dielectric; }
+float Material::getRI() const { return RefractiveIndex; }
 
 // Hittable class implementations
 Hittable::Hittable(const std::shared_ptr<Material>& material) : material(material) {}

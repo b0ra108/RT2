@@ -72,16 +72,21 @@ class Material {
 private:
     RGB DiffuseReflectance;
     bool Mirror;
+    bool Dielectric;
     float Fuzziness;
     float RefractiveIndex; 
 public:
     Material(const RGB& DiffuseReflectance);
-    Material(const RGB& DiffuseReflectance,bool Mirror);
     Material(const RGB& DiffuseReflectance,bool Mirror,float Fuzziness);
-    Material(const RGB& DiffuseReflectance,bool Mirror,float Fuzziness,float RefractiveIndex);
-    RGB getColor() const;
+    Material(const RGB& DiffuseReflectance,float RefractiveIndex); // DO IT LATER !! this is hard coded change later
+    RGB getColor() const;                                                           // the parametersbool Dielectric,float RefractiveIndex
+                                                                                    // were not allowed since the same types declared in fuzziess and mirror
+                                                                                    // initialization at one line before
+
     bool isMirrored() const;
     float getFuzziness() const;
+    bool isDielectric() const;
+    float getRI() const;
 };
 
 class LightSource{
@@ -112,7 +117,7 @@ public:
     void setDirection(const Vec3f& direction);
     Vec3f pointAt(float t) const;
     Vec3f reflect(const Vec3f& normal,float fuzziness) const;
-    Vec3f refract(const Vec3f& normal,float ri);
+    Vec3f refract(const Vec3f& normal,float ri) const;
 };
 
 
