@@ -5,13 +5,13 @@ int main(){
     Camera cam(Vec3f(0.0f, 0.0f, 0.0f));
     auto m1 = std::make_shared<Material>(RGB(215, 32, 93));
     auto m2 = std::make_shared<Material>(RGB(22,218,113));
-    auto m3 = std::make_shared<Material>(RGB(0.8f, 0.6f, 0.2f),true);
-    auto m4 = std::make_shared<Material>(RGB(0.4f,0.9f,0.1f),true);
+    auto m3 = std::make_shared<Material>(RGB(0.8f, 0.6f, 0.2f),true,0.1f);
+    auto m4 = std::make_shared<Material>(RGB(0.4f,0.9f,0.1f),true,0.5f);
 
     std::vector<std::shared_ptr<Hittable>> hittables;
     std::vector<std::shared_ptr<LightSource>> lightSources;
 
-    hittables.push_back(std::make_shared<Sphere>(m1, Vec3f(0.0f, 0.0f, -8.0f), 2.0f));
+    hittables.push_back(std::make_shared<Sphere>(m1, Vec3f(0.0f, 0.0f, -6.0f), 2.0f));
     hittables.push_back(std::make_shared<Sphere>(m2, Vec3f(0.0f, -102.0f, -5.0f), 100.0f));
     hittables.push_back(std::make_shared<Sphere>(m3, Vec3f(4.0f, -0.5f, -5.0f), 1.5f));
     hittables.push_back(std::make_shared<Sphere>(m4, Vec3f(-4.0f, -0.5f, -5.0f), 1.5f));
