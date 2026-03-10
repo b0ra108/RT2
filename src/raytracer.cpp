@@ -141,7 +141,7 @@ bool Scene::isShadowed(const Vec3f& hitPoint,const std::shared_ptr<LightSource>&
     return false;
 }
 
-RGB Scene::getPixelColor(const Ray& ray) const{
+RGB Scene::getPixelColor(const Ray& ray,int maxRecursionDepth) const{
     RGB pixelColor(AmbientLight); // start with ambient light
     Hittable* closestHittable = nullptr;
     float closestHit = std::numeric_limits<float>::max();
@@ -156,6 +156,7 @@ RGB Scene::getPixelColor(const Ray& ray) const{
     if(closestHit < std::numeric_limits<float>::max()) {
         Vec3f hitPoint = ray.pointAt(closestHit) + closestHittable->getNormal(ray.pointAt(closestHit)) * shadowRayEpsilon;
         Vec3f surfaceNormal = closestHittable->getNormal(hitPoint);
+        std::shared_ptr<Material> hitMaterial = closestHittable->getMaterial();
         pixelColor += AmbientLight;
         for(const auto& lightSource : lightSources) {
             if(!isShadowed(hitPoint,lightSource)){
@@ -163,15 +164,23 @@ RGB Scene::getPixelColor(const Ray& ray) const{
                 Ray ray_hitPoint_to_light(hitPoint,hitPoint_to_light);
                 float r_square = hitPoint_to_light.dot(hitPoint_to_light);
                 Vec3f lightDir = hitPoint_to_light.normalized();
-                pixelColor += (closestHittable->getMaterial()->getColor() * 
+                pixelColor += (hitMaterial->getColor() * 
                         std::max(0.0f, lightDir.dot(surfaceNormal)) *
                         (lightSource->getIntensity() / r_square));
             }
         }
+        if(hitMaterial->isMirrored() && maxRecursionDepth){
+            return pixelColor * getPixelColor(Ray(hitPoint,ray.reflect(surfaceNormal)),maxRecursionDepth - 1);
+        }
+
         return pixelColor;
     }
 
     return BackgroundColor;
+}
+
+Vec3f Ray::reflect(const Vec3f& normal) const{
+    return direction -  normal * 2 * direction.dot(normal);
 }
 
 // Camera class implementations
@@ -210,7 +219,7 @@ void Camera::render(const Scene& scene) {
             RGB pixelColor(0,0,0);
             for(int k = 0;k < samplePerPixel;k++){
                 Ray ray = generateRay(i,j);
-                pixelColor += scene.getPixelColor(ray) / samplePerPixel;
+                pixelColor += scene.getPixelColor(ray,maxRecursionDepth) / samplePerPixel;
             }
             image[i][j] = pixelColor;// DO IT LATER !!division can be done at the end of the loop as image[i][j] = pixelColor / samplePerPixel
         }
@@ -236,8 +245,12 @@ void Camera::setPosition(const Vec3f& position) {
     updateCamera();
 }
 
-Material::Material(const RGB& DiffuseReflectance) : DiffuseReflectance(DiffuseReflectance) {}
+
+// Material class implementations
+Material::Material(const RGB& DiffuseReflectance) : DiffuseReflectance(DiffuseReflectance), Mirror(false) {}
+Material::Material(const RGB& DiffuseReflectance,bool Mirror) : DiffuseReflectance(DiffuseReflectance), Mirror(Mirror) {}
 RGB Material::getColor() const { return DiffuseReflectance; }
+bool Material::isMirrored() const { return Mirror; }
 
 // Hittable class implementations
 Hittable::Hittable(const std::shared_ptr<Material>& material) : material(material) {}

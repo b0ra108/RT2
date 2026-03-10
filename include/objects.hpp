@@ -37,6 +37,7 @@ public:
     Vec3f u = Vec3f(1.0f, 0.0f, 0.0f);
     Vec3f v = Vec3f(0.0f, 1.0f, 0.0f);
     int samplePerPixel = 10;
+    int maxRecursionDepth = 3;
     Camera(const Vec3f& position);
     Camera() = default;
 
@@ -70,9 +71,12 @@ public:
 class Material {
 private:
     RGB DiffuseReflectance;
+    bool Mirror; 
 public:
     Material(const RGB& DiffuseReflectance);
+    Material(const RGB& DiffuseReflectance,bool Mirror);
     RGB getColor() const;
+    bool isMirrored() const;
 };
 
 class LightSource{
@@ -102,6 +106,7 @@ public:
     void setOrigin(const Vec3f& origin);
     void setDirection(const Vec3f& direction);
     Vec3f pointAt(float t) const;
+    Vec3f reflect(const Vec3f& normal) const;
 };
 
 
@@ -115,7 +120,7 @@ public:
     Scene() = default;
 
     bool isShadowed(const Vec3f& hitPoint,const std::shared_ptr<LightSource>& lightSource) const;
-    RGB getPixelColor(const Ray& ray) const;
+    RGB getPixelColor(const Ray& ray,int maxRecursionDepth) const;
 
 };
 

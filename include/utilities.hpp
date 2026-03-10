@@ -32,6 +32,7 @@ inline Vec3f randomUnitVec3f(){
          // that would result in calculating length again
     }
 }
+
 inline Vec3f randomVec3fHemisphere(const Vec3f& normal){
     Vec3f random_unit_vec = randomUnitVec3f(); 
 
@@ -41,4 +42,3 @@ inline Vec3f randomVec3fHemisphere(const Vec3f& normal){
     
     return random_unit_vec * (-1);
 }
-
