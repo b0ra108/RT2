@@ -22,6 +22,22 @@ Vec3f Vec3f::operator-(const Vec3f& vec) const{
     return Vec3f(x - vec.x, y - vec.y, z - vec.z);
 }
 
+Vec3f Vec3f::operator+=(const Vec3f& vec){
+    x += vec.getX();
+    y += vec.getY();
+    z += vec.getZ();
+
+    return Vec3f(x,y,z);
+}
+
+Vec3f Vec3f::operator-=(const Vec3f& vec){
+    x -= vec.getX();
+    y -= vec.getY();
+    z -= vec.getZ();
+
+    return Vec3f(x,y,z);
+}
+
 Vec3f Vec3f::operator*(float scalar) const {
     return Vec3f(x * scalar, y * scalar, z * scalar);
 }
@@ -154,9 +170,29 @@ RGB Scene::getPixelColor(const Ray& ray,int maxRecursionDepth) const{
     }
 
     if(closestHit < std::numeric_limits<float>::max()) {
-        Vec3f hitPoint = ray.pointAt(closestHit) + closestHittable->getNormal(ray.pointAt(closestHit)) * shadowRayEpsilon;
-        Vec3f surfaceNormal = closestHittable->getNormal(hitPoint);
+        Vec3f hitPoint = ray.pointAt(closestHit);
+        Vec3f surfaceNormal = closestHittable->getNormal(hitPoint).normalized();
+
+        Vec3f shadowRayEpsilonTerm;
+
+        bool rayFromInside = false;
+
+        if(ray.getDirection().normalized().dot(surfaceNormal) > 0){
+            surfaceNormal = surfaceNormal * (-1.0f);
+            rayFromInside = true;
+        }
+
         std::shared_ptr<Material> hitMaterial = closestHittable->getMaterial();
+
+        if(hitMaterial->isDielectric() && maxRecursionDepth > 0 ){
+            hitPoint -= closestHittable->getNormal(ray.pointAt(closestHit)) * shadowRayEpsilon;
+            float RI = (rayFromInside == true ? hitMaterial->getRI() : 
+                                                1.0f / hitMaterial->getRI());
+            return getPixelColor(Ray(hitPoint,ray.refract(surfaceNormal,RI)),
+                                        maxRecursionDepth - 1);
+        }
+
+        hitPoint += closestHittable->getNormal(ray.pointAt(closestHit)) * shadowRayEpsilon;
         pixelColor += AmbientLight;
         for(const auto& lightSource : lightSources) {
             if(!isShadowed(hitPoint,lightSource)){
@@ -173,8 +209,10 @@ RGB Scene::getPixelColor(const Ray& ray,int maxRecursionDepth) const{
             return pixelColor * getPixelColor(Ray(hitPoint,ray.reflect(surfaceNormal,hitMaterial->getFuzziness())),maxRecursionDepth - 1);
         }
         else if(hitMaterial->isDielectric() && maxRecursionDepth > 0 ){
-            return pixelColor * getPixelColor(Ray(hitPoint,ray.refract(surfaceNormal,hitMaterial->getRI())),
-                                        maxRecursionDepth - 2);
+            float RI = (rayFromInside == true ? hitMaterial->getRI() : 
+                                                1.0f / hitMaterial->getRI());
+            return getPixelColor(Ray(hitPoint,ray.refract(surfaceNormal,RI)),
+                                        maxRecursionDepth - 1);
         }
 
         return pixelColor;
@@ -189,9 +227,14 @@ Vec3f Ray::reflect(const Vec3f& normal,float fuzziness) const{
 }
 
 Vec3f Ray::refract(const Vec3f& normal,float ri) const{
-    auto cos_theta = std::fmin((direction.normalized() * (-1)).dot(normal) ,1.0f);
-    Vec3f horizontal_component = (direction + normal * cos_theta) * ri;
+    Vec3f dir_norm = direction.normalized();
+    float dir_dot_normal = -dir_norm.dot(normal);
+
+    auto cos_theta = std::fmin(dir_dot_normal, 1.0f);
+
+    Vec3f horizontal_component = (dir_norm + normal * cos_theta) * ri;
     Vec3f vertical_component = normal * (-std::sqrt(std::fabs(1.0 - horizontal_component.dot(horizontal_component))));
+
     return horizontal_component + vertical_component;
 }
 
