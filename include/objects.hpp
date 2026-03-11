@@ -30,7 +30,7 @@ private:
 
 public:
     float aspectRatio = 16.0f / 9.0f;
-    int nx = 800;
+    int nx = 1200;
     int ny; // will be calculated based on aspect ratio and nx
     float l = -1.0f, r = 1.0f, t, b; // t and b will be calculated based on aspect ratio and l,r
     float focalLength = 1.0f;
@@ -72,14 +72,19 @@ class Material {
 private:
     RGB DiffuseReflectance;
     bool Mirror;
+    bool Dielectric;
     float Fuzziness;
+    float RefractiveIndex; 
 public:
     Material(const RGB& DiffuseReflectance);
-    Material(const RGB& DiffuseReflectance,bool Mirror);
     Material(const RGB& DiffuseReflectance,bool Mirror,float Fuzziness);
-    RGB getColor() const;
+    Material(float RefractiveIndex); 
+    RGB getColor() const;                                                   
+
     bool isMirrored() const;
     float getFuzziness() const;
+    bool isDielectric() const;
+    float getRI() const;
 };
 
 class LightSource{
@@ -110,6 +115,7 @@ public:
     void setDirection(const Vec3f& direction);
     Vec3f pointAt(float t) const;
     Vec3f reflect(const Vec3f& normal,float fuzziness) const;
+    Vec3f refract(const Vec3f& normal,float ri) const;
 };
 
 

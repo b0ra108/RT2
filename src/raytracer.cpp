@@ -22,6 +22,22 @@ Vec3f Vec3f::operator-(const Vec3f& vec) const{
     return Vec3f(x - vec.x, y - vec.y, z - vec.z);
 }
 
+Vec3f Vec3f::operator+=(const Vec3f& vec){
+    x += vec.getX();
+    y += vec.getY();
+    z += vec.getZ();
+
+    return Vec3f(x,y,z);
+}
+
+Vec3f Vec3f::operator-=(const Vec3f& vec){
+    x -= vec.getX();
+    y -= vec.getY();
+    z -= vec.getZ();
+
+    return Vec3f(x,y,z);
+}
+
 Vec3f Vec3f::operator*(float scalar) const {
     return Vec3f(x * scalar, y * scalar, z * scalar);
 }
@@ -135,7 +151,7 @@ bool Scene::isShadowed(const Vec3f& hitPoint,const std::shared_ptr<LightSource>&
     Ray ray(hitPoint,hitPoint_to_light);
     for(const auto& hittable : hittables){
         float t = hittable->hit(ray,Interval(0,std::numeric_limits<float>::infinity()));
-        if(t >= 0)
+        if(t >= 0 && !hittable->getMaterial()->isDielectric())
             return true;
     }
     return false;
@@ -154,10 +170,41 @@ RGB Scene::getPixelColor(const Ray& ray,int maxRecursionDepth) const{
     }
 
     if(closestHit < std::numeric_limits<float>::max()) {
-        Vec3f hitPoint = ray.pointAt(closestHit) + closestHittable->getNormal(ray.pointAt(closestHit)) * shadowRayEpsilon;
-        Vec3f surfaceNormal = closestHittable->getNormal(hitPoint);
+        Vec3f hitPoint = ray.pointAt(closestHit);
+        Vec3f surfaceNormal = closestHittable->getNormal(hitPoint).normalized();
+
+        Vec3f shadowRayEpsilonTerm;
+
+        bool rayFromInside = false;
+
+        if(ray.getDirection().normalized().dot(surfaceNormal) > 0){
+            surfaceNormal = surfaceNormal * (-1.0f);
+            rayFromInside = true;
+        }
+
         std::shared_ptr<Material> hitMaterial = closestHittable->getMaterial();
-        pixelColor += AmbientLight;
+
+        if(hitMaterial->isDielectric() && maxRecursionDepth > 0 ){
+            hitPoint -= closestHittable->getNormal(ray.pointAt(closestHit)) * shadowRayEpsilon;
+            float RI = (rayFromInside == true ? hitMaterial->getRI() : 
+                                                1.0f / hitMaterial->getRI());
+            float cos_theta = std::fmin((ray.getDirection().normalized() * (-1)).dot(surfaceNormal),1.0f);
+            float sin_theta = std::sqrt(1.0f - cos_theta * cos_theta);
+
+            bool cannnotRefrect = RI * sin_theta > 1.0f;
+
+            auto r0 = (1 - RI) / (1 + RI);
+            r0 *= r0;
+            float reflactance = r0 + (1-r0)*std::pow((1-cos_theta),5);
+
+            return cannnotRefrect == false || reflactance > random_float() ? getPixelColor(Ray(hitPoint,ray.refract(surfaceNormal,RI)),
+                                                                maxRecursionDepth - 1) : 
+                                            getPixelColor(Ray(hitPoint,ray.reflect(surfaceNormal,0.0f)),
+                                                                maxRecursionDepth - 1);
+            
+        }
+
+        hitPoint += closestHittable->getNormal(ray.pointAt(closestHit)) * shadowRayEpsilon;
         for(const auto& lightSource : lightSources) {
             if(!isShadowed(hitPoint,lightSource)){
                 Vec3f hitPoint_to_light = lightSource->getPosition() - hitPoint;
@@ -169,21 +216,34 @@ RGB Scene::getPixelColor(const Ray& ray,int maxRecursionDepth) const{
                         (lightSource->getIntensity() / r_square));
             }
         }
-        if(hitMaterial->isMirrored() && maxRecursionDepth){
+        if(hitMaterial->isMirrored() && maxRecursionDepth > 0){
             return pixelColor * getPixelColor(Ray(hitPoint,ray.reflect(surfaceNormal,hitMaterial->getFuzziness())),maxRecursionDepth - 1);
         }
-
 
         return pixelColor;
     }
 
-    return BackgroundColor;
+    float a = ray.getDirection().getY();
+    return RGB(0.5f,0.7f,0.8f) * (1 - a) + RGB(0.5f,0.7f,1.0f) * a;
 }
 
 Vec3f Ray::reflect(const Vec3f& normal,float fuzziness) const{
     Vec3f reflected_direction = direction -  normal * 2 * direction.dot(normal);
     return reflected_direction.normalized() + randomUnitVec3f() * fuzziness;
 }
+
+Vec3f Ray::refract(const Vec3f& normal,float ri) const{
+    Vec3f dir_norm = direction.normalized();
+    float dir_dot_normal = -dir_norm.dot(normal);
+
+    auto cos_theta = std::fmin(dir_dot_normal, 1.0f);
+
+    Vec3f horizontal_component = (dir_norm + normal * cos_theta) * ri;
+    Vec3f vertical_component = normal * (-std::sqrt(std::fabs(1.0 - horizontal_component.dot(horizontal_component))));
+
+    return horizontal_component + vertical_component;
+}
+
 
 // Camera class implementations
 Camera::Camera(const Vec3f& position) : position(position) {}
@@ -223,7 +283,7 @@ void Camera::render(const Scene& scene) {
                 Ray ray = generateRay(i,j);
                 pixelColor += scene.getPixelColor(ray,maxRecursionDepth) / samplePerPixel;
             }
-            image[i][j] = pixelColor;// DO IT LATER !!division can be done at the end of the loop as image[i][j] = pixelColor / samplePerPixel
+            image[i][j] = pixelColor + scene.AmbientLight;// DO IT LATER !!division can be done at the end of the loop as image[i][j] = pixelColor / samplePerPixel
         }
     }
     writePPM();
@@ -251,21 +311,29 @@ void Camera::setPosition(const Vec3f& position) {
 // Material class implementations
 Material::Material(const RGB& DiffuseReflectance) : DiffuseReflectance(DiffuseReflectance), 
                                                     Mirror(false),
-                                                    Fuzziness(0.0f) {}
-Material::Material(const RGB& DiffuseReflectance,bool Mirror) : DiffuseReflectance(DiffuseReflectance), 
-                                                                Mirror(Mirror),
-                                                                Fuzziness(0.0f)
-                                                                 {}
+                                                    Fuzziness(0.0f),
+                                                    Dielectric(false),
+                                                    RefractiveIndex(-1.0f) {}
 
 Material::Material(const RGB& DiffuseReflectance,bool Mirror,float Fuzziness) : DiffuseReflectance(DiffuseReflectance), 
                                                                                 Mirror(Mirror),
-                                                                                Fuzziness(Fuzziness > 1.0f ? 1.0f : 
-                                                                                    (Fuzziness < 0.0f ? 0.0f : Fuzziness)) {}
+                                                                                Fuzziness(Mirror == true ? 
+                                                                                    (Fuzziness > 1.0f ? 1.0f : (Fuzziness < 0.0f ? 0.0f : Fuzziness)) :
+                                                                                    0.0f),
+                                                                                Dielectric(false),
+                                                                                RefractiveIndex(-1.0f){}
                                                                                 
+Material::Material(float RefractiveIndex): DiffuseReflectance(1.0f,1.0f,1.0f), 
+                                                            Mirror(false),
+                                                            Fuzziness(0.0f),
+                                                            Dielectric(true),
+                                                            RefractiveIndex(RefractiveIndex){}
 
 RGB Material::getColor() const { return DiffuseReflectance; }
 bool Material::isMirrored() const { return Mirror; }
 float Material::getFuzziness() const { return Fuzziness; }
+bool Material::isDielectric() const { return Dielectric; }
+float Material::getRI() const { return RefractiveIndex; }
 
 // Hittable class implementations
 Hittable::Hittable(const std::shared_ptr<Material>& material) : material(material) {}
