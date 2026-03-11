@@ -30,7 +30,7 @@ private:
 
 public:
     float aspectRatio = 16.0f / 9.0f;
-    int nx = 800;
+    int nx = 1200;
     int ny; // will be calculated based on aspect ratio and nx
     float l = -1.0f, r = 1.0f, t, b; // t and b will be calculated based on aspect ratio and l,r
     float focalLength = 1.0f;
