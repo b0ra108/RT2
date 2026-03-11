@@ -5,6 +5,9 @@
 #include "vecs.hpp"
 
 
+
+constexpr float PI = 3.14159265359;
+
 // Functions
 inline float random_float(){
     return std::rand() / (RAND_MAX + 1.0);
@@ -41,4 +44,8 @@ inline Vec3f randomVec3fHemisphere(const Vec3f& normal){
     }
     
     return random_unit_vec * (-1);
+}
+
+inline float degreeToRadian(float degree){
+    return degree * PI / 180;
 }

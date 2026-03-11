@@ -12,11 +12,11 @@ int main(){
     std::vector<std::shared_ptr<Hittable>> hittables;
     std::vector<std::shared_ptr<LightSource>> lightSources;
 
-    hittables.push_back(std::make_shared<Sphere>(m1, Vec3f(0.0f, 0.0f, -6.0f), 2.0f));
-    hittables.push_back(std::make_shared<Sphere>(m2, Vec3f(0.0f, -102.0f, -5.0f), 100.0f));
-    hittables.push_back(std::make_shared<Sphere>(m3, Vec3f(4.0f, -0.5f, -5.0f), 1.5f));
-    hittables.push_back(std::make_shared<Sphere>(m4, Vec3f(-4.0f, -0.5f, -5.0f), 1.5f));
-    hittables.push_back(std::make_shared<Sphere>(m5, Vec3f(-4.0f, -0.5f, -5.0f), 1.3f));
+    hittables.push_back(std::make_shared<Sphere>(m1, Vec3f(0.0f, 0.0f, -1.2f), 0.5f));
+    hittables.push_back(std::make_shared<Sphere>(m2, Vec3f(0.0f, -100.5f, -1.0f), 100.0f));
+    hittables.push_back(std::make_shared<Sphere>(m3, Vec3f(1.0f, 0.0f, -1.0f), 0.5f));
+    hittables.push_back(std::make_shared<Sphere>(m4, Vec3f(-1.0f, 0.0f, -1.0f), 0.5f));
+    hittables.push_back(std::make_shared<Sphere>(m5, Vec3f(-1.0f, 0.0f, -1.0f), 0.4f));
 
     lightSources.push_back(std::make_shared<LightSource>(Vec3f(5.0f, 10.0f, 0.0f),Vec3f(100.0f, 100.0f, 100.0f)));
 
@@ -27,6 +27,8 @@ int main(){
     scene.AmbientLight = RGB(0.1f,0.1f,0.1f);
     scene.shadowRayEpsilon = 1e-2f;
 
+    cam.lookFrom = Vec3f(-2,2,1);
+    cam.lookAt = Vec3f(0,0,-1);
     cam.samplePerPixel = 20;
     cam.render(scene);
 

@@ -252,11 +252,26 @@ Camera::Camera(const Vec3f& position) : position(position) {}
 // but it can not be in the middle horizontally.This not a good design choice, but I will fix it 
 // in the future when I add more features to the camera class.
 void Camera::updateCamera() {
-    Vec3f w = u.cross(v);
+    Vec3f atToFrom = (lookFrom - lookAt);
+    w = atToFrom.normalized();
+    u = vUp.cross(w).normalized();
+    v = w.cross(u).normalized();
+
+    focalLength = std::sqrt(atToFrom.dot(atToFrom));
+    position = lookFrom;
+
     Vec3f m = position - w * focalLength;
     ny = (int)(nx / aspectRatio);
+
+    auto theta = degreeToRadian(vfov);
+    auto h = std::tan(theta/2);
+
+    r *= h * focalLength;
+    l *= h * focalLength;
+
     t = (r - l) / aspectRatio / 2.0f;
     b = -t;
+
     deltau = u * ((r - l) / (float)nx);
     deltav = v * ((b - t) / (float)ny);
     Viewport00 = m + u * l + v * t + deltau * 0.5f + deltav * 0.5f;

@@ -24,6 +24,7 @@ private:
     Vec3f deltav;
     float viewportHeight;
     float viewportWidth;
+    Vec3f u,v,w;
     std::vector<std::vector<RGB>> image;
     void writePPM();
     void updateCamera();
@@ -34,8 +35,10 @@ public:
     int ny; // will be calculated based on aspect ratio and nx
     float l = -1.0f, r = 1.0f, t, b; // t and b will be calculated based on aspect ratio and l,r
     float focalLength = 1.0f;
-    Vec3f u = Vec3f(1.0f, 0.0f, 0.0f);
-    Vec3f v = Vec3f(0.0f, 1.0f, 0.0f);
+    float vfov = 90;
+    Vec3f lookFrom = Vec3f(0,0,0);
+    Vec3f lookAt = Vec3f(0,0,-1);
+    Vec3f vUp = Vec3f(0,1,0);
     int samplePerPixel = 10;
     int maxRecursionDepth = 3;
     Camera(const Vec3f& position);
