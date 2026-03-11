@@ -78,10 +78,8 @@ private:
 public:
     Material(const RGB& DiffuseReflectance);
     Material(const RGB& DiffuseReflectance,bool Mirror,float Fuzziness);
-    Material(const RGB& DiffuseReflectance,float RefractiveIndex); // DO IT LATER !! this is hard coded change later
-    RGB getColor() const;                                                           // the parametersbool Dielectric,float RefractiveIndex
-                                                                                    // were not allowed since the same types declared in fuzziess and mirror
-                                                                                    // initialization at one line before
+    Material(float RefractiveIndex); 
+    RGB getColor() const;                                                   
 
     bool isMirrored() const;
     float getFuzziness() const;

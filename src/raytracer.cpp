@@ -151,7 +151,7 @@ bool Scene::isShadowed(const Vec3f& hitPoint,const std::shared_ptr<LightSource>&
     Ray ray(hitPoint,hitPoint_to_light);
     for(const auto& hittable : hittables){
         float t = hittable->hit(ray,Interval(0,std::numeric_limits<float>::infinity()));
-        if(t >= 0)
+        if(t >= 0 && !hittable->getMaterial()->isDielectric())
             return true;
     }
     return false;
@@ -188,12 +188,23 @@ RGB Scene::getPixelColor(const Ray& ray,int maxRecursionDepth) const{
             hitPoint -= closestHittable->getNormal(ray.pointAt(closestHit)) * shadowRayEpsilon;
             float RI = (rayFromInside == true ? hitMaterial->getRI() : 
                                                 1.0f / hitMaterial->getRI());
-            return getPixelColor(Ray(hitPoint,ray.refract(surfaceNormal,RI)),
-                                        maxRecursionDepth - 1);
+            float cos_theta = std::fmin((ray.getDirection().normalized() * (-1)).dot(surfaceNormal),1.0f);
+            float sin_theta = std::sqrt(1.0f - cos_theta * cos_theta);
+
+            bool cannnotRefrect = RI * sin_theta > 1.0f;
+
+            auto r0 = (1 - RI) / (1 + RI);
+            r0 *= r0;
+            float reflactance = r0 + (1-r0)*std::pow((1-cos_theta),5);
+
+            return cannnotRefrect == false || reflactance > random_float() ? getPixelColor(Ray(hitPoint,ray.refract(surfaceNormal,RI)),
+                                                                maxRecursionDepth - 1) : 
+                                            getPixelColor(Ray(hitPoint,ray.reflect(surfaceNormal,0.0f)),
+                                                                maxRecursionDepth - 1);
+            
         }
 
         hitPoint += closestHittable->getNormal(ray.pointAt(closestHit)) * shadowRayEpsilon;
-        pixelColor += AmbientLight;
         for(const auto& lightSource : lightSources) {
             if(!isShadowed(hitPoint,lightSource)){
                 Vec3f hitPoint_to_light = lightSource->getPosition() - hitPoint;
@@ -208,17 +219,12 @@ RGB Scene::getPixelColor(const Ray& ray,int maxRecursionDepth) const{
         if(hitMaterial->isMirrored() && maxRecursionDepth > 0){
             return pixelColor * getPixelColor(Ray(hitPoint,ray.reflect(surfaceNormal,hitMaterial->getFuzziness())),maxRecursionDepth - 1);
         }
-        else if(hitMaterial->isDielectric() && maxRecursionDepth > 0 ){
-            float RI = (rayFromInside == true ? hitMaterial->getRI() : 
-                                                1.0f / hitMaterial->getRI());
-            return getPixelColor(Ray(hitPoint,ray.refract(surfaceNormal,RI)),
-                                        maxRecursionDepth - 1);
-        }
 
         return pixelColor;
     }
 
-    return BackgroundColor;
+    float a = ray.getDirection().getY();
+    return RGB(0.5f,0.7f,0.8f) * (1 - a) + RGB(0.5f,0.7f,1.0f) * a;
 }
 
 Vec3f Ray::reflect(const Vec3f& normal,float fuzziness) const{
@@ -277,7 +283,7 @@ void Camera::render(const Scene& scene) {
                 Ray ray = generateRay(i,j);
                 pixelColor += scene.getPixelColor(ray,maxRecursionDepth) / samplePerPixel;
             }
-            image[i][j] = pixelColor;// DO IT LATER !!division can be done at the end of the loop as image[i][j] = pixelColor / samplePerPixel
+            image[i][j] = pixelColor + scene.AmbientLight;// DO IT LATER !!division can be done at the end of the loop as image[i][j] = pixelColor / samplePerPixel
         }
     }
     writePPM();
@@ -317,12 +323,9 @@ Material::Material(const RGB& DiffuseReflectance,bool Mirror,float Fuzziness) : 
                                                                                 Dielectric(false),
                                                                                 RefractiveIndex(-1.0f){}
                                                                                 
-Material::Material(const RGB& DiffuseReflectance,float RefractiveIndex): DiffuseReflectance(DiffuseReflectance), 
+Material::Material(float RefractiveIndex): DiffuseReflectance(1.0f,1.0f,1.0f), 
                                                             Mirror(false),
                                                             Fuzziness(0.0f),
-                                                            /*Dielectric(Dielectric),
-                                                            RefractiveIndex(Dielectric == true ? 
-                                                                        (RefractiveIndex <= 0.0f ? 0.0f : RefractiveIndex) : -1.0f)*/
                                                             Dielectric(true),
                                                             RefractiveIndex(RefractiveIndex){}
 
