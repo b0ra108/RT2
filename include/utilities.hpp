@@ -49,11 +49,15 @@ inline Vec3f randomVec3fHemisphere(const Vec3f& normal){
 inline Vec3f randomVec3fDisk(){
     while(true){
         Vec3f p = Vec3f(random_float(-1,1),random_float(-1,1),0);
-        if(p.dot(p) <= 1)
+        if(p.dot(p) < 1)
             return p;
     }
 }
 
 inline float degreeToRadian(float degree){
     return degree * PI / 180;
+}
+
+inline float vectorLength(const Vec3f& vec){
+    return std::sqrt(vec.dot(vec));
 }

@@ -127,7 +127,13 @@ RGB RGB::operator-(float scalar) const {
     return RGB(r - scalar, g - scalar, b - scalar);
 }
 
+RGB RGB::randomColor(){
+    return RGB(1.0f,1.0f,1.0f) * randomUnitVec3f();
+}
 
+RGB RGB::randomColor(float min, float max){
+    return RGB(1.0f,1.0f,1.0f) * randomVec3f(min,max);
+}
 // Ray class implementations
 Ray::Ray(const Vec3f& origin, const Vec3f& direction) : origin(origin), direction(direction) {}
 Vec3f Ray::getOrigin() const { return origin; }
@@ -145,6 +151,8 @@ Vec3f LightSource::getPosition() const { return position; }
 Vec3f LightSource::getIntensity() const { return intensity; }
 
 
+Scene::Scene(std::vector<std::shared_ptr<Hittable>>& hittables,
+        std::vector<std::shared_ptr<LightSource>>& lightSources) : hittables(hittables),lightSources(lightSources) {}
 
 bool Scene::isShadowed(const Vec3f& hitPoint,const std::shared_ptr<LightSource>& lightSource) const{
     Vec3f hitPoint_to_light = lightSource->getPosition() - hitPoint;
@@ -158,7 +166,7 @@ bool Scene::isShadowed(const Vec3f& hitPoint,const std::shared_ptr<LightSource>&
 }
 
 RGB Scene::getPixelColor(const Ray& ray,int maxRecursionDepth) const{
-    RGB pixelColor(AmbientLight); // start with ambient light
+    RGB pixelColor(0,0,0);
     Hittable* closestHittable = nullptr;
     float closestHit = std::numeric_limits<float>::max();
     for (const auto& hittable : hittables) {

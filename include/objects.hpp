@@ -130,9 +130,11 @@ class Scene{
 public:
     RGB BackgroundColor;
     RGB AmbientLight;
-    std::vector<std::shared_ptr<Hittable>> hittables;
-    std::vector<std::shared_ptr<LightSource>> lightSources;
+    std::vector<std::shared_ptr<Hittable>>& hittables;
+    std::vector<std::shared_ptr<LightSource>>& lightSources;
     float shadowRayEpsilon;
+    Scene(std::vector<std::shared_ptr<Hittable>>& hittables,
+         std::vector<std::shared_ptr<LightSource>>& lightSources);
     Scene() = default;
 
     bool isShadowed(const Vec3f& hitPoint,const std::shared_ptr<LightSource>& lightSource) const;

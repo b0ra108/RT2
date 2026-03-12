@@ -66,6 +66,9 @@ class RGB {
         void operator-=(const RGB& other);
         void operator*=(const RGB& other);
         void operator/=(const RGB& other);
+
+        static RGB randomColor();
+        static RGB randomColor(float min,float max);
 };
 
 
