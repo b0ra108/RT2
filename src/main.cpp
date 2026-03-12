@@ -28,15 +28,15 @@ int main(){
 
     Scene scene(hittables,lightSources);
 
-    lightSources.push_back(std::make_shared<LightSource>(Vec3f(5.0f, 10.0f, 0.0f),Vec3f(100.0f, 100.0f, 100.0f)));
+    lightSources.push_back(std::make_shared<LightSource>(Vec3f(8.0f, 10.0f, 0.0f),Vec3f(100.0f, 100.0f, 100.0f)));
     scene.BackgroundColor = RGB(32,148,215);
     scene.AmbientLight = RGB(0.1f,0.1f,0.1f);
     scene.shadowRayEpsilon = 1e-2f;
 
     cam.lookFrom = Vec3f(13,2,3);
     cam.lookAt = Vec3f(0,0,0);
-    cam.samplePerPixel = 3;
-    cam.defocusAngle = 0.2f;
+    cam.samplePerPixel = 100;
+    cam.defocusAngle = 0.6f;
     cam.focusDistance = 10.0f;
 
 
