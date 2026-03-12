@@ -257,17 +257,16 @@ void Camera::updateCamera() {
     u = vUp.cross(w).normalized();
     v = w.cross(u).normalized();
 
-    focalLength = std::sqrt(atToFrom.dot(atToFrom));
     position = lookFrom;
 
-    Vec3f m = position - w * focalLength;
+    Vec3f m = position - w * focusDistance;
     ny = (int)(nx / aspectRatio);
 
     auto theta = degreeToRadian(vfov);
     auto h = std::tan(theta/2);
 
-    r *= h * focalLength;
-    l *= h * focalLength;
+    r *= h * focusDistance;
+    l *= h * focusDistance;
 
     t = (r - l) / aspectRatio / 2.0f;
     b = -t;
@@ -275,14 +274,19 @@ void Camera::updateCamera() {
     deltau = u * ((r - l) / (float)nx);
     deltav = v * ((b - t) / (float)ny);
     Viewport00 = m + u * l + v * t + deltau * 0.5f + deltav * 0.5f;
+
+    auto defocus_radius = focusDistance * std::tan(degreeToRadian(defocusAngle/2));
+    defocusDisku = u * defocus_radius;
+    defocusDiskv = v * defocus_radius;
 }
 
 Ray Camera::generateRay(int i, int j){
     auto offset = Vec3f(random_float() - 0.5f,random_float() - 0.5f,0.0f);
+    Vec3f origin = (defocusAngle <= 0) ? this->position : random_defocusDiskPoint();
     Vec3f rayDirection = (Viewport00 + 
-                        deltau * (j + offset.getX()) + 
-                        deltav * (i + offset.getY()) - position).normalized();
-    return Ray(this->position,rayDirection);
+                    deltau * (j + offset.getX()) + 
+                    deltav * (i + offset.getY()) - origin).normalized();
+    return Ray(origin,rayDirection);
 }
 
 // This function will be responsible for rendering the scene by generating rays for 
@@ -322,6 +326,10 @@ void Camera::setPosition(const Vec3f& position) {
     updateCamera();
 }
 
+Vec3f Camera::random_defocusDiskPoint() const{
+    auto p = randomVec3fDisk();
+    return this->position + (defocusDisku * p.getX()) + (defocusDiskv * p.getY());
+}
 
 // Material class implementations
 Material::Material(const RGB& DiffuseReflectance) : DiffuseReflectance(DiffuseReflectance), 

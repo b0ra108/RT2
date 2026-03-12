@@ -22,6 +22,8 @@ private:
     Vec3f Viewport00;
     Vec3f deltau;
     Vec3f deltav;
+    Vec3f defocusDisku;
+    Vec3f defocusDiskv;
     float viewportHeight;
     float viewportWidth;
     Vec3f u,v,w;
@@ -34,11 +36,12 @@ public:
     int nx = 1200;
     int ny; // will be calculated based on aspect ratio and nx
     float l = -1.0f, r = 1.0f, t, b; // t and b will be calculated based on aspect ratio and l,r
-    float focalLength = 1.0f;
-    float vfov = 90;
+    float vfov = 50;
     Vec3f lookFrom = Vec3f(0,0,0);
     Vec3f lookAt = Vec3f(0,0,-1);
     Vec3f vUp = Vec3f(0,1,0);
+    float defocusAngle = 2.5;
+    float focusDistance = 2.5;
     int samplePerPixel = 10;
     int maxRecursionDepth = 3;
     Camera(const Vec3f& position);
@@ -47,6 +50,7 @@ public:
     void setPosition(const Vec3f& position);
     Ray generateRay(int i, int j);
     void render(const Scene& scene);
+    Vec3f random_defocusDiskPoint() const;
 };
 
 class Hittable {

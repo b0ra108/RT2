@@ -27,9 +27,12 @@ int main(){
     scene.AmbientLight = RGB(0.1f,0.1f,0.1f);
     scene.shadowRayEpsilon = 1e-2f;
 
+
     cam.lookFrom = Vec3f(-2,2,1);
     cam.lookAt = Vec3f(0,0,-1);
-    cam.samplePerPixel = 20;
+    cam.samplePerPixel = 10;
+    cam.defocusAngle = 10.0;
+    cam.focusDistance = 3.4;
     cam.render(scene);
 
     return 0;

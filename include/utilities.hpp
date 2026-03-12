@@ -46,6 +46,14 @@ inline Vec3f randomVec3fHemisphere(const Vec3f& normal){
     return random_unit_vec * (-1);
 }
 
+inline Vec3f randomVec3fDisk(){
+    while(true){
+        Vec3f p = Vec3f(random_float(-1,1),random_float(-1,1),0);
+        if(p.dot(p) <= 1)
+            return p;
+    }
+}
+
 inline float degreeToRadian(float degree){
     return degree * PI / 180;
 }
